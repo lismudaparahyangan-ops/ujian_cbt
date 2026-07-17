@@ -73,12 +73,15 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $active_group = 'default';
 $query_builder = TRUE;
 
+// Railway environment variables
+$railway_db_url = getenv('DATABASE_PRIVATE_URL') ?: getenv('DATABASE_URL');
+
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => 'localhost',
-	'username' => 'root',
-	'password' => '',
-	'database' => 'zyacbtpublic',
+	'hostname' => getenv('DATABASE_HOST') ?: 'localhost',
+	'username' => getenv('DATABASE_USER') ?: 'root',
+	'password' => getenv('DATABASE_PASSWORD') ?: '',
+	'database' => getenv('DATABASE_NAME') ?: 'zyacbtpublic',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
