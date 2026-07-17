@@ -2,9 +2,9 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 /**
 * ZYA CBT
-* Achmad Lutfi
-* achmdlutfi@gmail.com
-* achmadlutfi.wordpress.com
+* administrator
+* uas-stmik@gmail.com
+* uas-stmik.wordpress.com
 */
 class Tes extends CI_Controller {
 
@@ -31,3 +31,4 @@ class Tes extends CI_Controller {
 		$this->load->view('welcome_message');
 	}
 }
+
