@@ -16,8 +16,58 @@ class Welcome extends CI_Controller {
 		$this->load->library('user_agent');
 		$this->load->model('cbt_konfigurasi_model');
 	}
+
+	private function ensure_database_schema(){
+		$mysqli = new mysqli(
+			getenv('DB_HOST') ?: getenv('MYSQLHOST') ?: 'localhost',
+			getenv('DB_USERNAME') ?: getenv('MYSQLUSER') ?: 'root',
+			getenv('DB_PASSWORD') ?: getenv('MYSQLPASSWORD') ?: '',
+			getenv('DB_NAME') ?: getenv('MYSQLDATABASE') ?: 'zyacbtpublic',
+			(int) (getenv('DB_PORT') ?: getenv('MYSQLPORT') ?: 3306)
+		);
+
+		if ($mysqli->connect_error) {
+			return false;
+		}
+
+		$check = $mysqli->query("SHOW TABLES LIKE 'cbt_konfigurasi'");
+		if ($check && $check->num_rows > 0) {
+			$mysqli->close();
+			return true;
+		}
+
+		$sql_path = FCPATH . 'zyacbt-public-2024-05-05-dengan-database.sql';
+		if (!file_exists($sql_path)) {
+			$mysqli->close();
+			return false;
+		}
+
+		$sql = file_get_contents($sql_path);
+		if ($sql === false) {
+			$mysqli->close();
+			return false;
+		}
+
+		if ($mysqli->multi_query($sql)) {
+			do {
+				if ($result = $mysqli->store_result()) {
+					$result->free();
+				}
+			} while ($mysqli->more_results() && $mysqli->next_result());
+			$mysqli->close();
+			return true;
+		}
+
+		$mysqli->close();
+		return false;
+	}
     
 	public function index(){
+		if (!$this->ensure_database_schema()) {
+			echo '<h2>Database sedang disiapkan.</h2><p>Silakan refresh beberapa saat lagi.</p>';
+			return;
+		}
+
 		$data['url'] = $this->url;
 		$data['timestamp'] = strtotime(date('Y-m-d H:i:s'));
 		if ($this->agent->is_browser()){

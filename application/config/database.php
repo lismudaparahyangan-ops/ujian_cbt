@@ -73,12 +73,18 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $active_group = 'default';
 $query_builder = TRUE;
 
+$host = getenv('DB_HOST') ?: getenv('MYSQLHOST') ?: 'localhost';
+$user = getenv('DB_USERNAME') ?: getenv('MYSQLUSER') ?: 'root';
+$pass = getenv('DB_PASSWORD') ?: getenv('MYSQLPASSWORD') ?: '';
+$name = getenv('DB_NAME') ?: getenv('MYSQLDATABASE') ?: 'zyacbtpublic';
+$port = getenv('DB_PORT') ?: getenv('MYSQLPORT') ?: '3306';
+
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => 'localhost',
-	'username' => 'root',
-	'password' => '',
-	'database' => 'zyacbtpublic',
+	'hostname' => $host . ($port && $port !== '3306' ? ':' . $port : ''),
+	'username' => $user,
+	'password' => $pass,
+	'database' => $name,
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
