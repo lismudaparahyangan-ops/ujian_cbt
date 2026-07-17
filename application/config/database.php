@@ -73,27 +73,43 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $active_group = 'default';
 $query_builder = TRUE;
 
-// Railway environment variables
-$db_host = getenv('DATABASE_HOST') ?: 'localhost';
-$db_user = getenv('DATABASE_USER') ?: 'root';
-$db_pass = getenv('DATABASE_PASSWORD') ?: '';
-$db_name = getenv('DATABASE_NAME') ?: 'zyacbtpublic';
+// Environment variables - Support both Railway template variables and standard names
+$db_port = getenv('DB_PORT') ?: getenv('DATABASE_PORT') ?: '3306';
+$db_host = getenv('DB_HOST') ?: getenv('DATABASE_HOST') ?: 'localhost';
+$db_user = getenv('DB_USERNAME') ?: getenv('DATABASE_USER') ?: 'root';
+$db_pass = getenv('DB_PASSWORD') ?: getenv('DATABASE_PASSWORD') ?: '';
+$db_name = getenv('DB_NAME') ?: getenv('DATABASE_NAME') ?: 'zyacbtpublic';
 
-// Parse DATABASE_PRIVATE_URL if available (Railway format)
+// Parse DATABASE_PRIVATE_URL or DATABASE_URL if available (Railway format: mysql://user:pass@host:port/dbname)
 $railway_db_url = getenv('DATABASE_PRIVATE_URL') ?: getenv('DATABASE_URL');
 if ($railway_db_url && (strpos($railway_db_url, 'mysql://') === 0 || strpos($railway_db_url, 'postgresql://') === 0)) {
 	$parsed_url = parse_url($railway_db_url);
-	if ($parsed_url) {
-		$db_host = $parsed_url['host'] . (isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '');
-		$db_user = $parsed_url['user'] ?? $db_user;
-		$db_pass = $parsed_url['pass'] ?? $db_pass;
-		$db_name = trim($parsed_url['path'] ?? '', '/');
+	if ($parsed_url && isset($parsed_url['host'])) {
+		$db_host = $parsed_url['host'];
+		if (isset($parsed_url['port'])) {
+			$db_port = $parsed_url['port'];
+		}
+		if (isset($parsed_url['user'])) {
+			$db_user = $parsed_url['user'];
+		}
+		if (isset($parsed_url['pass'])) {
+			$db_pass = $parsed_url['pass'];
+		}
+		if (isset($parsed_url['path'])) {
+			$db_name = ltrim($parsed_url['path'], '/');
+		}
 	}
+}
+
+// Combine host and port for hostname field
+$hostname = $db_host;
+if ($db_port && $db_port !== '3306') {
+	$hostname = $db_host . ':' . $db_port;
 }
 
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => $db_host,
+	'hostname' => $hostname,
 	'username' => $db_user,
 	'password' => $db_pass,
 	'database' => $db_name,
@@ -103,8 +119,8 @@ $db['default'] = array(
 	'db_debug' => (ENVIRONMENT !== 'production'),
 	'cache_on' => FALSE,
 	'cachedir' => '',
-	'char_set' => 'utf8',
-	'dbcollat' => 'utf8_general_ci',
+	'char_set' => 'utf8mb4',
+	'dbcollat' => 'utf8mb4_unicode_ci',
 	'swap_pre' => '',
 	'encrypt' => FALSE,
 	'compress' => FALSE,

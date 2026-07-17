@@ -27,11 +27,17 @@ $config['site_version'] = '2025.12.25';
 | a PHP script and you can easily do that on your own.
 |
 */
-// asli
-// $config['base_url'] = "http://".$_SERVER['HTTP_HOST'].str_replace(basename($_SERVER['SCRIPT_NAME']),"",$_SERVER['SCRIPT_NAME']);
-$root=(isset($_SERVER['HTTPS']) ? "https://" : "http://").$_SERVER['HTTP_HOST'];
-$root.= str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
-$config['base_url'] = $root;
+if (getenv('APP_URL')) {
+    $config['base_url'] = getenv('APP_URL');
+    if (substr($config['base_url'], -1) !== '/') {
+        $config['base_url'] .= '/';
+    }
+} else {
+    // Local development - auto-detect
+    $root = (isset($_SERVER['HTTPS']) ? "https://" : "http://") . $_SERVER['HTTP_HOST'];
+    $root .= str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
+    $config['base_url'] = $root;
+}
 
 /*
 |--------------------------------------------------------------------------
