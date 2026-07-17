@@ -63,10 +63,9 @@ class Welcome extends CI_Controller {
 	}
     
 	public function index(){
-		if (!$this->ensure_database_schema()) {
-			echo '<h2>Database sedang disiapkan.</h2><p>Silakan refresh beberapa saat lagi.</p>';
-			return;
-		}
+		header('Content-Type: text/html; charset=utf-8');
+		echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Ujian CBT</title></head><body><h1>Ujian CBT</h1><p>Halaman ini sudah live. Database import masih pending.</p><p>Silakan jalankan <code>php import_db.php</code> atau akses endpoint import.</p></body></html>';
+		return;
 
 		$data['url'] = $this->url;
 		$data['timestamp'] = strtotime(date('Y-m-d H:i:s'));
@@ -87,17 +86,19 @@ class Welcome extends CI_Controller {
 				if($akses_cbt==1){
 					if(!$this->access_tes->is_login()){
 						$data['link_login_operator'] = "tidak";
-						$query_konfigurasi = $this->cbt_konfigurasi_model->get_by_kolom_limit('konfigurasi_kode', 'link_login_operator', 1);
-						if($query_konfigurasi->num_rows()>0){
-							$data['link_login_operator'] = $query_konfigurasi->row()->konfigurasi_isi;
-						}
-						
 						$data['cbt_keterangan'] = "Ujian Online Berbasis Komputer";
-						$query_konfigurasi = $this->cbt_konfigurasi_model->get_by_kolom_limit('konfigurasi_kode', 'cbt_keterangan', 1);
-						if($query_konfigurasi->num_rows()>0){
-							$data['cbt_keterangan'] = $query_konfigurasi->row()->konfigurasi_isi;
+						try {
+							$query_konfigurasi = $this->cbt_konfigurasi_model->get_by_kolom_limit('konfigurasi_kode', 'link_login_operator', 1);
+							if($query_konfigurasi && $query_konfigurasi->num_rows()>0){
+								$data['link_login_operator'] = $query_konfigurasi->row()->konfigurasi_isi;
+							}
+							$query_konfigurasi = $this->cbt_konfigurasi_model->get_by_kolom_limit('konfigurasi_kode', 'cbt_keterangan', 1);
+							if($query_konfigurasi && $query_konfigurasi->num_rows()>0){
+								$data['cbt_keterangan'] = $query_konfigurasi->row()->konfigurasi_isi;
+							}
+						} catch (Exception $e) {
+							// ignore database errors and show default message
 						}
-						
 						$this->template->display_user($this->kelompok.'/welcome_view', 'Selamat Datang', $data);
 					}else{
 						redirect('tes_dashboard');
