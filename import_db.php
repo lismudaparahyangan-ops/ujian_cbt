@@ -35,7 +35,15 @@ foreach ($statements as $statement) {
         continue;
     }
 
-    if (!$mysqli->query($statement)) {
+    // Skip CREATE DATABASE / USE statements to import into the current target DB
+    $cleanStatement = preg_replace('/^CREATE DATABASE IF NOT EXISTS .*$/i', '', $statement);
+    $cleanStatement = preg_replace('/^USE `[^`]+`$/i', '', $cleanStatement);
+    $cleanStatement = trim($cleanStatement);
+    if ($cleanStatement === '') {
+        continue;
+    }
+
+    if (!$mysqli->query($cleanStatement)) {
         $errno = $mysqli->errno;
         $error = $mysqli->error;
 
