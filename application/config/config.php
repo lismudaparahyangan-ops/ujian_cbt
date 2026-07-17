@@ -29,8 +29,28 @@ $config['site_version'] = '2025.12.25';
 */
 $app_url = getenv('APP_URL');
 if (!empty($app_url)) {
-    $app_url = rtrim($app_url, '/');
-    $config['base_url'] = $app_url . '/';
+    $app_url = trim($app_url);
+    if (!preg_match('#^https?://#i', $app_url)) {
+        $app_url = 'https://' . $app_url;
+    }
+
+    $parsed = parse_url($app_url);
+    if ($parsed && !empty($parsed['host'])) {
+        $scheme = $parsed['scheme'] ?? 'https';
+        $host = $parsed['host'];
+        $path = $parsed['path'] ?? '';
+
+        // If APP_URL contains the domain in the path, remove the repeated host segment.
+        $pathSegments = array_values(array_filter(explode('/', $path), 'strlen'));
+        if (!empty($pathSegments) && strtolower($pathSegments[0]) === strtolower($host)) {
+            array_shift($pathSegments);
+            $path = '/' . implode('/', $pathSegments);
+        }
+
+        $app_url = $scheme . '://' . $host . rtrim($path, '/');
+    }
+
+    $config['base_url'] = rtrim($app_url, '/') . '/';
 } else {
     // Local development - auto-detect
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
