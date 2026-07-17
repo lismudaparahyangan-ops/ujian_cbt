@@ -74,14 +74,29 @@ $active_group = 'default';
 $query_builder = TRUE;
 
 // Railway environment variables
+$db_host = getenv('DATABASE_HOST') ?: 'localhost';
+$db_user = getenv('DATABASE_USER') ?: 'root';
+$db_pass = getenv('DATABASE_PASSWORD') ?: '';
+$db_name = getenv('DATABASE_NAME') ?: 'zyacbtpublic';
+
+// Parse DATABASE_PRIVATE_URL if available (Railway format)
 $railway_db_url = getenv('DATABASE_PRIVATE_URL') ?: getenv('DATABASE_URL');
+if ($railway_db_url && (strpos($railway_db_url, 'mysql://') === 0 || strpos($railway_db_url, 'postgresql://') === 0)) {
+	$parsed_url = parse_url($railway_db_url);
+	if ($parsed_url) {
+		$db_host = $parsed_url['host'] . (isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '');
+		$db_user = $parsed_url['user'] ?? $db_user;
+		$db_pass = $parsed_url['pass'] ?? $db_pass;
+		$db_name = trim($parsed_url['path'] ?? '', '/');
+	}
+}
 
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => getenv('DATABASE_HOST') ?: 'localhost',
-	'username' => getenv('DATABASE_USER') ?: 'root',
-	'password' => getenv('DATABASE_PASSWORD') ?: '',
-	'database' => getenv('DATABASE_NAME') ?: 'zyacbtpublic',
+	'hostname' => $db_host,
+	'username' => $db_user,
+	'password' => $db_pass,
+	'database' => $db_name,
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
