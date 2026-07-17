@@ -1,0 +1,4 @@
+cbt_sessions/
+*.log
+.DS_Store
+.vscode/
