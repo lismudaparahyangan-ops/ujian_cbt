@@ -34,6 +34,9 @@ if (empty($env_base_url) && getenv('RAILWAY_PUBLIC_DOMAIN')) {
 	$env_base_url = 'https://' . getenv('RAILWAY_PUBLIC_DOMAIN');
 }
 if (!empty($env_base_url)) {
+	if (strpos($env_base_url, '://') === false) {
+		$env_base_url = 'https://' . $env_base_url;
+	}
 	$config['base_url'] = rtrim($env_base_url, '/') . '/';
 } else {
 	$scheme = 'http';
