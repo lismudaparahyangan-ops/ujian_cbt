@@ -10,6 +10,7 @@ if (!file_exists($sqlFile)) {
     die('SQL file not found: ' . $sqlFile . PHP_EOL);
 }
 
+mysqli_report(MYSQLI_REPORT_OFF);
 $mysqli = new mysqli($mysqlHost, $mysqlUser, $mysqlPass, $mysqlDb, (int) $mysqlPort);
 if ($mysqli->connect_error) {
     die('Connection failed: ' . $mysqli->connect_error . PHP_EOL);
@@ -20,15 +21,41 @@ if ($sql === false) {
     die('Unable to read SQL file.' . PHP_EOL);
 }
 
-if ($mysqli->multi_query($sql)) {
-    do {
-        if ($result = $mysqli->store_result()) {
-            $result->free();
+$statements = preg_split('/;\s*(\r\n|\n|\r)/', $sql);
+if ($statements === false) {
+    die('Unable to split SQL file.' . PHP_EOL);
+}
+
+$executed = 0;
+$skipped = 0;
+$errors = [];
+foreach ($statements as $statement) {
+    $statement = trim($statement);
+    if ($statement === '' || strpos($statement, '--') === 0 || strpos($statement, '/*') === 0) {
+        continue;
+    }
+
+    if (!$mysqli->query($statement)) {
+        $errno = $mysqli->errno;
+        $error = $mysqli->error;
+
+        if (in_array($errno, [1050, 1060, 1062], true)) {
+            $skipped++;
+            continue;
         }
-    } while ($mysqli->more_results() && $mysqli->next_result());
-    echo "Database import completed successfully." . PHP_EOL;
-} else {
-    die('Import failed: ' . $mysqli->error . PHP_EOL);
+
+        $errors[] = "[$errno] $error";
+        break;
+    }
+
+    $executed++;
 }
 
 $mysqli->close();
+
+if (!empty($errors)) {
+    echo "Import completed with errors:\n" . implode("\n", $errors) . PHP_EOL;
+    exit(1);
+}
+
+echo "Database import completed successfully. Executed: $executed, skipped: $skipped." . PHP_EOL;
